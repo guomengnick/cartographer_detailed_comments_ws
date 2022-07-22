@@ -83,7 +83,7 @@ class CollatedTrajectoryBuilder : public TrajectoryBuilderInterface {
     if (collate_fixed_frame_) {
       AddData(sensor::MakeDispatchable(sensor_id, fixed_frame_pose_data));
       return;
-    }
+    }//kuo_add:wrapped_trajectory_builder_ 就是Global_trajectory_builder
     wrapped_trajectory_builder_->AddSensorData(sensor_id,
                                                fixed_frame_pose_data);
   }

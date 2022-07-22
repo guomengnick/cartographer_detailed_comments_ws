@@ -169,6 +169,10 @@ Node::Node(
         node_handle_.advertise<::geometry_msgs::PoseStamped>(
             kTrackedPoseTopic, kLatestOnlyPublisherQueueSize);
   }
+  // Kuo_add
+    Localization_publisher_ = node_handle_.advertise<std_msgs::Bo1ol>(
+            "Localizaion_Status", 10);
+    Localization_publisher_.publish(true);
   // lx add
   if (node_options_.map_builder_options.use_trajectory_builder_3d()) {
     point_cloud_map_publisher_ =

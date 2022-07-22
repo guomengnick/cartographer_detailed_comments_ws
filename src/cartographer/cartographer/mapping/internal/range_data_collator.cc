@@ -107,9 +107,9 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
                current_end_) {
       ++overlap_end;
     }
-
-    // 丢弃点云中时间比起始时间早的点, 每执行一下CropAndMerge()打印一次log
-    if (ranges.begin() < overlap_begin && !warned_for_dropped_points) {
+    
+    // // 丢弃点云中时间比起始时间早的点, 每执行一下CropAndMerge()打印一次log
+    if (ranges.begin() < overlap_begin && !warned_for_dropped_points && false) {
       LOG(WARNING) << "Dropped " << std::distance(ranges.begin(), overlap_begin)
                    << " earlier points.";
       warned_for_dropped_points = true;
@@ -119,10 +119,11 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
     if (overlap_begin < overlap_end) {
       // 获取下个点云的index, 即当前vector的个数
       std::size_t origin_index = result.origins.size();
+      
       result.origins.push_back(data.origin);  // 插入原点坐标
 
       // 获取此传感器时间与集合时间戳的误差, 
-      const float time_correction =
+      const float time_correction =//kuo_add:因為這邊的時間為0，導致後面的時間都是0
           static_cast<float>(common::ToSeconds(data.time - current_end_));
 
       auto intensities_overlap_it =
@@ -130,7 +131,7 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
       // reserve() 在预留空间改变时, 会将之前的数据拷贝到新的内存中
       result.ranges.reserve(result.ranges.size() +
                             std::distance(overlap_begin, overlap_end));
-      
+      std::cout<<"result.ranges.size():"<<result.ranges.size()<<"\n";
       // 填充数据
       for (auto overlap_it = overlap_begin; overlap_it != overlap_end;
            ++overlap_it, ++intensities_overlap_it) {
@@ -142,6 +143,7 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
         point.point_time.time += time_correction;  
         result.ranges.push_back(point);
       } // end for
+      std::cout<<"After for result.ranges.size():"<<result.ranges.size()<<"\n";
     } // end if
 
     // Drop buffered points until overlap_end.

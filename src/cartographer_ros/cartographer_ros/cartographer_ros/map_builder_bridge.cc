@@ -664,6 +664,8 @@ SensorBridge* MapBuilderBridge::sensor_bridge(const int trajectory_id) {
  * @param[in] time 扫描匹配的时间
  * @param[in] local_pose 扫描匹配计算出的在local坐标系下的位姿
  * @param[in] range_data_in_local 扫描匹配使用的雷达数据
+ * //kuo_add:每次global_trajectory_builder.cc  AddSensorData匹配完後就會呼叫一次這個
+ * 這個函式放在private，只有宣告成回調函式時使用，
  */
 void MapBuilderBridge::OnLocalSlamResult(
     const int trajectory_id, const ::cartographer::common::Time time,

@@ -181,11 +181,11 @@ LocalTrajectoryBuilder2D::AddRangeData(
   range_data_poses.reserve(synchronized_data.ranges.size());
   bool warned = false;
 
-  // 预测得到每一个时间点的位姿
-  for (const auto& range : synchronized_data.ranges) {
+  // 预测得到每一个时间点的位姿                                                       //time:最後一點的絕對時間，最新的
+  for (const auto& range : synchronized_data.ranges) {                            //range.point_time.time：越舊越負的相對時間
     common::Time time_point = time + common::FromSeconds(range.point_time.time);
     // 如果该时间比上次预测位姿的时间还要早,说明这个点的时间戳往回走了, 就报错
-    if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
+    if (time_point < extrapolator_->GetLastExtrapolatedTime()) {//每一個點都不應該比上次匹配還舊
       // 一个循环只报一次错
       if (!warned) {
         LOG(ERROR)
@@ -220,11 +220,11 @@ LocalTrajectoryBuilder2D::AddRangeData(
         synchronized_data.origins.at(synchronized_data.ranges[i].origin_index);
     
     // Step: 3 运动畸变的去除, 将相对于tracking_frame的hit坐标 转成 local坐标系下的坐标
-    sensor::RangefinderPoint hit_in_local =
-        range_data_poses[i] * sensor::ToRangefinderPoint(hit);
-    
-    // 计算这个点的距离, 这里用的是去畸变之后的点的距离
-    const Eigen::Vector3f delta = hit_in_local.position - origin_in_local;
+    sensor::RangefinderPoint hit_in_local =                                           //hit                                ：  Tracking ~ obstacle
+        range_data_poses[i] * sensor::ToRangefinderPoint(hit);                        //range_data_poses ＆ origin_in_local： local ~ tracking
+                                                                                      //hit_in_local                       ： local ~ obstacle   
+    // 计算这个点的距离, 这里用的是去畸变之后的点的距离                                       origin_in_local 幾乎為0，找不出原因為何不為0
+    const Eigen::Vector3f delta = hit_in_local.position - origin_in_local;            //delta                              ：就是local hit
     const float range = delta.norm();
     
     // param: min_range max_range
@@ -272,7 +272,7 @@ LocalTrajectoryBuilder2D::AddRangeData(
         time,
         // 将点云变换到local原点处, 且姿态为0
         TransformToGravityAlignedFrameAndFilter(
-            gravity_alignment.cast<float>() * range_data_poses.back().inverse(),
+            gravity_alignment.cast<float>() * range_data_poses.back().inverse(),//kuo_add:相乘為local ~ tracking 且姿態為0，也就是跟local 同方向
             accumulated_range_data_),
         gravity_alignment, sensor_duration);
   }
@@ -329,8 +329,8 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
 
   // 将二维坐标旋转回之前的姿态
   const transform::Rigid3d pose_estimate =
-      transform::Embed3D(*pose_estimate_2d) * gravity_alignment;
-  // 校准位姿估计器
+      transform::Embed3D(*pose_estimate_2d) * gravity_alignment;  //kuo_add：傳入匹配的位置是local ~ tracking(extrapolator+ScanMatch)，姿態是0，
+  // 校准位姿估计器                                                             可能匹配完之後校正為 0....幾度，在這裡再乘回
   extrapolator_->AddPose(time, pose_estimate);
 
   // Step: 8 将 原点位于local坐标系原点处的点云 变换成 原点位于匹配后的位姿处的点云

@@ -1538,10 +1538,10 @@ void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
     std::vector<Constraint> constraints;
     for (const Constraint& constraint : parent_->data_.constraints) {
       if (constraint.submap_id != submap_id) {
-        constraints.push_back(constraint);
+        constraints.push_back(constraint);//存入的是要保留的約束（只有待刪子圖的約束不加入）
       }
     }
-    parent_->data_.constraints = std::move(constraints);
+    parent_->data_.constraints = std::move(constraints);//把所有要保留的約束取代掉 data_.constraints
   }
 
   // Remove all 'data_.constraints' related to 'nodes_to_remove'.
@@ -1552,11 +1552,11 @@ void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
     std::set<SubmapId> other_submap_ids_losing_constraints;
     // Step: 2 删除与nodes_to_remove中节点相关联的约束, 并对submap_id进行标记
     for (const Constraint& constraint : parent_->data_.constraints) {
-      if (nodes_to_remove.count(constraint.node_id) == 0) {
-        constraints.push_back(constraint);
+      if (nodes_to_remove.count(constraint.node_id) == 0) 
+        constraints.push_back(constraint);{//如果約束的node不存在於待刪node中，保存起來
       } else {
         // A constraint to another submap will be removed, mark it as affected.
-        other_submap_ids_losing_constraints.insert(constraint.submap_id);
+        other_submap_ids_losing_constraints.insert(constraint.submap_id);//約束node存在待刪node中的
       }
     }
     parent_->data_.constraints = std::move(constraints);

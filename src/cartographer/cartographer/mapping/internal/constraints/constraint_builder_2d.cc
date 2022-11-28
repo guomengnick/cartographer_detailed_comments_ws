@@ -385,13 +385,13 @@ void ConstraintBuilder2D::RunWhenDoneCallback() {
 
     // 将计算完的约束进行保存
     for (const std::unique_ptr<Constraint>& constraint : constraints_) {
-      if (constraint == nullptr) continue;
+      if (constraint == nullptr) continue;//kuo:就在這裡，即使分數很低，還是會有size，但不會存入result，也就是不會加入其數據做最佳化
       result.push_back(*constraint);
     }
 
     if (options_.log_matches()) {
-      LOG(INFO) << constraints_.size() << " computations resulted in "
-                << result.size() << " additional constraints.";
+      LOG(INFO) << constraints_.size() << " computations resulted in "  //這應該是全部的約束
+                << result.size() << " additional constraints.";//高於閥值的約束
       LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
     }
 

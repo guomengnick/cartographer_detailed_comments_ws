@@ -119,26 +119,34 @@ void AddLandmarkCostFunctions(
     std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem,
     double huber_scale) {
   // 对所有的landmark进行遍历, 添加landmark的残差
-  for (const auto& landmark_node : landmark_nodes) {
+  //kuo:對每一個id遍歷：每個id在每次的優化中可能有幾十個觀測點，取決於幾個node優化一次，假設每個node就優化
+  //則landmark_nodes還是有可能會有好幾個，看距離上次優化的node ~ 這次的node中有幾個landmark 每個landmark可看為每個反光柱
+  for (const auto& landmark_node : landmark_nodes) { 
+    
+    //kuo:這邊在對每個反光柱做遍歷，https://docs.google.com/presentation/d/10d7K5lntZHWY4ATeeM0HdISkvrMDkY2c2BeoJQPSFc0/edit?usp=sharing
+    //遍歷ppt的每個綠點（進入這邊就都是同一個id，會有不同的time、不同的座標變換，每個時間下看到的位置都不大相同）
+    //遍歷的順序會依照傳入的時間（AddLandmarkData()   emplace_back()）
     for (const auto& observation : landmark_node.second.landmark_observations) {
+      //observation.first: id      second:
       const std::string& landmark_id = landmark_node.first;
-      const auto& begin_of_trajectory =
-          node_data.BeginOfTrajectory(observation.trajectory_id);
+      const auto& begin_of_trajectory =   //  begin_of_trajectory:此軌跡的第一個node
+          node_data.BeginOfTrajectory(observation.trajectory_id);             
       // The landmark observation was made before the trajectory was created.
       if (observation.time < begin_of_trajectory->data.time) {
         continue;
       }
       // Find the trajectory nodes before and after the landmark observation.
       // 找到landmark观测时间后的第一个节点
-      auto next =
-          node_data.lower_bound(observation.trajectory_id, observation.time);
-      // The landmark observation was made, but the next trajectory node has
+      auto next =                                                            //     
+          node_data.lower_bound(observation.trajectory_id, observation.time);//T: -----node0------landmark0-----landmark1------node1
+      // The landmark observation was made, but the next trajectory node has    找到這個  ^
       // not been added yet.
+      //kuo:此軌跡的最後一個node，如果等於最後一個點，代表後端目前只有一個node，就先不加入此landmark，因為沒有兩個node可以做差值
       if (next == node_data.EndOfTrajectory(observation.trajectory_id)) {
         continue;
       }
-      if (next == begin_of_trajectory) {
-        next = std::next(next);
+      if (next == begin_of_trajectory) {//T: -----node0------------landmark0-----landmark1------node1
+        next = std::next(next);         //      prev^        C_landmark^                      next^
       }
       // 找到landmark观测时间前一个节点
       auto prev = std::prev(next);
@@ -149,9 +157,14 @@ void AddLandmarkCostFunctions(
       if (!C_landmarks->count(landmark_id)) {
         // 如果有优化后的位姿就用优化后的位姿, 没有就根据时间插值算出来一个位姿
         // starting_point就是这帧landmark数据对应的tracking_frame在global坐标系下的位姿
-        const transform::Rigid3d starting_point =
+        const transform::Rigid3d starting_point =//kuo:這個是tracking -> landmark
             landmark_node.second.global_landmark_pose.has_value()
+                
+                //kuo:建圖時，如果還沒有最佳化，global_landmark_pose就沒有值，此值是優化問題產生的
+                //只有兩種情況這個值會有1.優化後   2.從地圖獲取的landmark就會有值
                 ? landmark_node.second.global_landmark_pose.value()
+                
+                //如果在建圖時，第一次都沒優化過就會用插值的方式獲取map -> tracking
                 : GetInitialLandmarkPose(observation, prev->data, next->data,
                                          *prev_node_pose, *next_node_pose);
         // 将landmark数据放入C_landmarks

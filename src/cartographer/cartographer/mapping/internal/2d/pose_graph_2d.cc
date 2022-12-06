@@ -1158,7 +1158,7 @@ void PoseGraph2D::RunOptimization() {
   // 更新data_.landmark_nodes
   for (const auto& landmark : optimization_problem_->landmark_data()) {
     data_.landmark_nodes[landmark.first].global_landmark_pose = landmark.second;
-  }
+  }//kuo:                lanamark的id    
 
   // 更新所有submap的位姿
   data_.global_submap_poses_2d = submap_data;

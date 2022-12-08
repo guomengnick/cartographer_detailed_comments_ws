@@ -44,7 +44,7 @@ class LandmarkCostFunction2D {
       const NodeSpec2D& next_node) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction2D, 
-        6 /* residuals */,
+        6 /* residuals */,    //老師：xyz & roll pitch yaw
         3 /* previous node pose variables */, 
         3 /* next node pose variables */,
         4 /* landmark rotation variables */,

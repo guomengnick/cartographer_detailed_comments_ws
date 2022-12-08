@@ -1394,10 +1394,11 @@ PoseGraph2D::GetAllSubmapPoses() const {
 transform::Rigid3d PoseGraph2D::ComputeLocalToGlobalTransform(
     const MapById<SubmapId, optimization::SubmapSpec2D>& global_submap_poses,
     const int trajectory_id) const {
-  auto begin_it = global_submap_poses.BeginOfTrajectory(trajectory_id);
-  auto end_it = global_submap_poses.EndOfTrajectory(trajectory_id);
+  auto begin_it = global_submap_poses.BeginOfTrajectory(trajectory_id);//kuo:獲取此軌跡的第一個子圖的迭代器，也就是一開始的子圖0
+  auto end_it = global_submap_poses.EndOfTrajectory(trajectory_id);//獲取此軌跡的最後一個子圖
   // 没找到这个轨迹id
-  if (begin_it == end_it) {
+  if (begin_it == end_it) {//kuo:相等的話就是begin_if  ＆end_it 指向空。
+        //如果只有一個子圖時，begin_it:(1,0)    end_it:指向最後一個的後面一個，就是空
     const auto it = data_.initial_trajectory_poses.find(trajectory_id);
     // 如果设置了初始位姿
     if (it != data_.initial_trajectory_poses.end()) {
@@ -1412,6 +1413,7 @@ transform::Rigid3d PoseGraph2D::ComputeLocalToGlobalTransform(
   }
 
   // 找到了就获取优化后的最后一个子图的id
+  //假設已經有十幾個子圖，獲取最新的，假設目前子圖只有 (1,15)  & (1,16) 則獲取(1,16)的子圖
   const SubmapId last_optimized_submap_id = std::prev(end_it)->id;
   // Accessing 'local_pose' in Submap is okay, since the member is const.
   // 通过最后一个优化后的 global_pose * local_pose().inverse() 获取 global_pose->local_pose的坐标变换

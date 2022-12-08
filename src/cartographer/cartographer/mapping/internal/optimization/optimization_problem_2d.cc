@@ -188,8 +188,9 @@ void AddLandmarkCostFunctions(
           LandmarkCostFunction2D::CreateAutoDiffCostFunction(
               observation, prev->data, next->data),
           new ceres::HuberLoss(huber_scale), 
-          prev_node_pose->data(),
-          next_node_pose->data(), 
+          prev_node_pose->data(),                       //優化的東西有四種:兩個節點的旋轉平移
+          next_node_pose->data(),                       //landmark的旋轉、平移共四種
+          //kuo:定位時的pose固定，下面兩個不變，會更動的是上面兩個（定位軌跡的節點）
           C_landmarks->at(landmark_id).rotation(),
           C_landmarks->at(landmark_id).translation());
     }

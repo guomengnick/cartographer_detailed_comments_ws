@@ -27,6 +27,7 @@ namespace {
 // Computes a cost for matching the 'point_cloud' to the 'grid' with
 // a 'pose'. The cost increases with poorer correspondence of the grid and the
 // point observation (e.g. points falling into less occupied space).
+//kuo:當點雲落在柵格的點數越少的時候，代價越高，目標是找到代價最低（residual趨近0）的時候，xy yaw分別為多少
 class OccupiedSpaceCostFunction2D {
  public:
   OccupiedSpaceCostFunction2D(const double scaling_factor,
@@ -38,8 +39,8 @@ class OccupiedSpaceCostFunction2D {
 
   template <typename T>
   bool operator()(const T* const pose, T* residual) const {
-    Eigen::Matrix<T, 2, 1> translation(pose[0], pose[1]);
-    Eigen::Rotation2D<T> rotation(pose[2]);
+    Eigen::Matrix<T, 2, 1> translation(pose[0], pose[1]);   //double [x,y]
+    Eigen::Rotation2D<T> rotation(pose[2]);                 //double [yaw角度]
     Eigen::Matrix<T, 2, 2> rotation_matrix = rotation.toRotationMatrix();
     Eigen::Matrix<T, 3, 3> transform;
     transform << rotation_matrix, translation, T(0.), T(0.), T(1.);
@@ -122,7 +123,7 @@ ceres::CostFunction* CreateOccupiedSpaceCostFunction2D(
     const double scaling_factor, const sensor::PointCloud& point_cloud,
     const Grid2D& grid) {
   return new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunction2D,
-                                         ceres::DYNAMIC /* residuals */,
+                                         ceres::DYNAMIC /* residuals */,    //kuo:因為殘差（要求的最小值不確定，預設200左右）
                                          3 /* pose variables */>(
       new OccupiedSpaceCostFunction2D(scaling_factor, point_cloud, grid),
       point_cloud.size()); // 比固定残差维度的 多了一个参数

@@ -70,25 +70,26 @@ CeresScanMatcher2D::~CeresScanMatcher2D() {}
  * @param[out] pose_estimate 优化之后的位姿
  * @param[out] summary 
  */
-void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,
-                               const transform::Rigid2d& initial_pose_estimate,
-                               const sensor::PointCloud& point_cloud,
-                               const Grid2D& grid,
-                               transform::Rigid2d* const pose_estimate,
+void CeresScanMatcher2D::Match(const Eigen::Vector2d& target_translation,          //kuo:不會改的值，xy
+                               const transform::Rigid2d& initial_pose_estimate,    //不會改的值，比上述多了旋轉
+                               const sensor::PointCloud& point_cloud,              //200個點雲
+                               const Grid2D& grid,                                 //柵格地圖
+                               transform::Rigid2d* const pose_estimate,            //這個值為空，最後會對其賦值，這個值可以改，但是指向的東西不能改
                                ceres::Solver::Summary* const summary) const {
+  //kuo：ceres吃的是double，這個數據是list，只要傳ceres_pose_estimate 就是指標了，會對其改值，solve後再給pose_estimate
   double ceres_pose_estimate[3] = {initial_pose_estimate.translation().x(),
                                    initial_pose_estimate.translation().y(),
                                    initial_pose_estimate.rotation().angle()};
   ceres::Problem problem;
 
   // 地图部分的残差
-  CHECK_GT(options_.occupied_space_weight(), 0.);
+  CHECK_GT(options_.occupied_space_weight(), 0.);  //預設1
   switch (grid.GetGridType()) {
     case GridType::PROBABILITY_GRID:
       problem.AddResidualBlock(
           CreateOccupiedSpaceCostFunction2D(
               options_.occupied_space_weight() /
-                  std::sqrt(static_cast<double>(point_cloud.size())),
+                  std::sqrt(static_cast<double>(point_cloud.size())),  //kuo:LaserScan每一個點的權重是  1/14
               point_cloud, grid),
           nullptr /* loss function */, ceres_pose_estimate);
       break;

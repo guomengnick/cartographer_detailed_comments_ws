@@ -116,6 +116,7 @@ void AddLandmarkCostFunctions(
     const std::map<std::string, LandmarkNode>& landmark_nodes,
     const MapById<NodeId, NodeSpec2D>& node_data,
     MapById<NodeId, std::array<double, 3>>* C_nodes,
+    //kuo:老師說會宣告這個CeresPose是因為要優化的東西（進去看）
     std::map<std::string, CeresPose>* C_landmarks, ceres::Problem* problem,
     double huber_scale) {
   // 对所有的landmark进行遍历, 添加landmark的残差
@@ -190,7 +191,7 @@ void AddLandmarkCostFunctions(
           new ceres::HuberLoss(huber_scale), 
           prev_node_pose->data(),                       //優化的東西有四種:兩個節點的旋轉平移
           next_node_pose->data(),                       //landmark的旋轉、平移共四種
-          //kuo:定位時的pose固定，下面兩個不變，會更動的是上面兩個（定位軌跡的節點）
+          //kuo:定位時的landmark 下的pose固定，下面兩個不變，會更動的是上面兩個（定位軌跡的節點）
           C_landmarks->at(landmark_id).rotation(),
           C_landmarks->at(landmark_id).translation());
     }

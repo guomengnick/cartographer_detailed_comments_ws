@@ -32,6 +32,8 @@ class CeresPose {
  public:
   CeresPose(
       const transform::Rigid3d& rigid,
+      //kuo 如果是用默認的方式更新待優化的參數就不用寫這個，但這裡因為是使用四元素代表旋轉，
+      //所以這邊要有額外的操作
       std::unique_ptr<ceres::LocalParameterization> translation_parametrization,
       std::unique_ptr<ceres::LocalParameterization> rotation_parametrization,
       ceres::Problem* problem);

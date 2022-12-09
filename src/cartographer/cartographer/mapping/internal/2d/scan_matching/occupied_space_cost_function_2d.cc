@@ -65,7 +65,7 @@ class OccupiedSpaceCostFunction2D {
           &residual[i]);
       // free值越小, 表示占用的概率越大
       residual[i] = scaling_factor_ * residual[i];
-    }
+    }           //scaling_factor_:1/14 (1/200^0.5)
     return true;
   }
 

@@ -334,7 +334,7 @@ void OptimizationProblem2D::Solve(
     problem.AddParameterBlock(C_submaps.at(submap_id_data.id).data(), 3);
 
     if (first_submap || frozen) {
-      first_submap = false;
+      first_submap = false;//kuo:這邊應該是每條軌跡的第一個子圖是不動的，不只是第0個軌跡
       // Fix the pose of the first submap or all submaps of a frozen
       // trajectory.
       // Step: 如果是第一幅子图, 或者是已经冻结的轨迹中的子图, 不优化这个子图位姿
@@ -350,7 +350,7 @@ void OptimizationProblem2D::Solve(
     C_nodes.Insert(node_id_data.id, FromPose(node_id_data.data.global_pose_2d));
     problem.AddParameterBlock(C_nodes.at(node_id_data.id).data(), 3);
     // 第一个节点的位姿也是要优化的变量, 不是固定的
-    if (frozen) {
+    if (frozen) {//主要看軌跡是否為凍結，不用將node  submap 裡面都放frozen，是用上面的frozen_trajectories
       problem.SetParameterBlockConstant(C_nodes.at(node_id_data.id).data());
     }
   }

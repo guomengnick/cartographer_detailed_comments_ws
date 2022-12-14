@@ -3,7 +3,12 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "/home/ros/cartographer_ws/install_isolated/include/**",
+                "/opt/ros/noetic/include/**",
+                "/usr/include/**",
+                "/home/cartographer_ws/devel_isolated/**",
+                "/home/cartographer_ws/build_isolated/**",
+                "~/cartographer_ws/src/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

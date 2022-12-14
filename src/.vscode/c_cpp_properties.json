@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/ros/catkin_ws/devel/include/**",
+        "/home/ros/cartographer_ws/install_isolated/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/ros/catkin_ws/src/can_driver_innodisk/include/**",
+        "/home/ros/catkin_ws/src/ceres-solver/include/**",
+        "/home/ros/catkin_ws/src/forklift_controller/include/**",
+        "/home/ros/catkin_ws/src/pf_lidar_ros_driver/pf_driver/include/**",
+        "/home/ros/catkin_ws/src/sick_scan/include/**",
+        "/home/ros/catkin_ws/src/ros_tutorials/turtlesim/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

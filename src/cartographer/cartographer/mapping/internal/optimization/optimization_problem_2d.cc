@@ -102,11 +102,11 @@ transform::Rigid3d GetInitialLandmarkPose(
   // 根据landmark数据的时间对2个节点位姿进行插值, 得到这个时刻的tracking_frame在global坐标系下的位姿
   const std::tuple<std::array<double, 4>, std::array<double, 3>>
       rotation_and_translation =
-          InterpolateNodes2D(prev_node_pose.data(), prev_node.gravity_alignment,
+          InterpolateNodes2D(prev_node_pose.data(), prev_node.gravity_alignment,         //array: 儲存{x,y,yaw}, data() 取出第一個位置的值
                              next_node_pose.data(), next_node.gravity_alignment,
                              interpolation_parameter);
   // 将landmark的数据从tracking_frame下的位姿转到global坐标系下
-  return transform::Rigid3d::FromArrays(std::get<0>(rotation_and_translation),
+  return transform::Rigid3d::FromArrays(std::get<0>(rotation_and_translation),   //rotation
                                         std::get<1>(rotation_and_translation)) *
          observation.landmark_to_tracking_transform;
 }
@@ -123,7 +123,6 @@ void AddLandmarkCostFunctions(
   //kuo:對每一個id遍歷：每個id在每次的優化中可能有幾十個觀測點，取決於幾個node優化一次，假設每個node就優化
   //則landmark_nodes還是有可能會有好幾個，看距離上次優化的node ~ 這次的node中有幾個landmark 每個landmark可看為每個反光柱
   for (const auto& landmark_node : landmark_nodes) { 
-    
     //kuo:這邊在對每個反光柱做遍歷，https://docs.google.com/presentation/d/10d7K5lntZHWY4ATeeM0HdISkvrMDkY2c2BeoJQPSFc0/edit?usp=sharing
     //遍歷ppt的每個綠點（進入這邊就都是同一個id，會有不同的time、不同的座標變換，每個時間下看到的位置都不大相同）
     //遍歷的順序會依照傳入的時間（AddLandmarkData()   emplace_back()）
@@ -140,17 +139,17 @@ void AddLandmarkCostFunctions(
       // 找到landmark观测时间后的第一个节点
       auto next =                                                            //     
           node_data.lower_bound(observation.trajectory_id, observation.time);//T: -----node0------landmark0-----landmark1------node1
-      // The landmark observation was made, but the next trajectory node has    找到這個  ^
+      // The landmark observation was made, but the next trajectory node has                                找到這個  ^
       // not been added yet.
       //kuo:此軌跡的最後一個node，如果等於最後一個點，代表後端目前只有一個node，就先不加入此landmark，因為沒有兩個node可以做差值
       if (next == node_data.EndOfTrajectory(observation.trajectory_id)) {
         continue;
       }
-      if (next == begin_of_trajectory) {//T: -----node0------------landmark0-----landmark1------node1
-        next = std::next(next);         //      prev^        C_landmark^                      next^
+      if (next == begin_of_trajectory) {
+        next = std::next(next);         
       }
-      // 找到landmark观测时间前一个节点
-      auto prev = std::prev(next);
+      // 找到landmark观测时间前一个节点  //T: -----node0------------landmark0-----landmark1------node1
+      auto prev = std::prev(next);   //      prev^        C_landmark^                      next^
       // Add parameter blocks for the landmark ID if they were not added before.
       std::array<double, 3>* prev_node_pose = &C_nodes->at(prev->id);
       std::array<double, 3>* next_node_pose = &C_nodes->at(next->id);
@@ -160,19 +159,17 @@ void AddLandmarkCostFunctions(
         // starting_point就是这帧landmark数据对应的tracking_frame在global坐标系下的位姿
         const transform::Rigid3d starting_point =//kuo:這個是tracking -> landmark
             landmark_node.second.global_landmark_pose.has_value()
-                
                 //kuo:建圖時，如果還沒有最佳化，global_landmark_pose就沒有值，此值是優化問題產生的
                 //只有兩種情況這個值會有1.優化後   2.從地圖獲取的landmark就會有值
                 ? landmark_node.second.global_landmark_pose.value()
-                
                 //如果在建圖時，第一次都沒優化過就會用插值的方式獲取map -> tracking
-                : GetInitialLandmarkPose(observation, prev->data, next->data,
+                : GetInitialLandmarkPose(observation, prev->data, next->data,    
                                          *prev_node_pose, *next_node_pose);
         // 将landmark数据放入C_landmarks
         C_landmarks->emplace(
             landmark_id,
             // 将landmark数据对应的节点的平移与旋转作为优化变量加入到problem中
-            CeresPose(starting_point, 
+            CeresPose(starting_point, //這個值是global座標系下的landmark座標，只加一次是因為裡面是添加參數塊，目的是將要優化的landmark加進去
                       nullptr /* translation_parametrization */,
                       absl::make_unique<ceres::QuaternionParameterization>(),
                       problem));
@@ -197,6 +194,20 @@ void AddLandmarkCostFunctions(
     }
   }
 }
+// kuo:CreateAutoDiffCostFunction 回傳的值就是下方的東西，
+// ceres::CostFunction* CreateAutoDiffCostFunction(
+//       const LandmarkObservation& observation, const NodeSpec2D& prev_node,
+//       const NodeSpec2D& next_node) {
+//     return new ceres::AutoDiffCostFunction<
+//         LandmarkCostFunction2D, 
+//         6 /* residuals */,                        在operator內經過 InterpolateNodes2D 是7個殘差的，
+//                                                   但經過ScaleError後變成6個殘差了，要求最小值就是這六個，返回的由原本的四元素變成RPY
+//         3 /* previous node pose variables */,     對應 prev_node_pose->data(),
+//         3 /* next node pose variables */,         對應 next_node_pose->data(),
+//         4 /* landmark rotation variables */,      對應 C_landmarks->at(landmark_id).rotation(),
+//         3 /* landmark translation variables */>(  對應 C_landmarks->at(landmark_id).translation());
+//         new LandmarkCostFunction2D(observation, prev_node, next_node));
+//   }
 
 }  // namespace
 

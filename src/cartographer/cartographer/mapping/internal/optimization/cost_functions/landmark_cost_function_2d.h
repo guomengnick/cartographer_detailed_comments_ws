@@ -44,7 +44,7 @@ class LandmarkCostFunction2D {
       const NodeSpec2D& next_node) {
     return new ceres::AutoDiffCostFunction<
         LandmarkCostFunction2D, 
-        6 /* residuals */,    //老師：xyz & roll pitch yaw
+        6 /* residuals */,    //為什麼還要求z？node是二維的，但landmark是三維的，透過imu將node轉成三維，就可以對xyz RYP進行求解最佳化，而不只有二維
         3 /* previous node pose variables */, 
         3 /* next node pose variables */,
         4 /* landmark rotation variables */,
@@ -52,7 +52,7 @@ class LandmarkCostFunction2D {
         new LandmarkCostFunction2D(observation, prev_node, next_node));
   }
 
-  template <typename T>
+  template <typename T>//這邊的值在optimize_problem.AddResidualBlock加進來的
   bool operator()(const T* const prev_node_pose, const T* const next_node_pose,
                   const T* const landmark_rotation,
                   const T* const landmark_translation, T* const e) const {
@@ -61,7 +61,7 @@ class LandmarkCostFunction2D {
         interpolated_rotation_and_translation = InterpolateNodes2D(
             prev_node_pose, prev_node_gravity_alignment_, next_node_pose,
             next_node_gravity_alignment_, interpolation_parameter_);
-    // 计算加权残差
+    // 计算加权残差，這邊要求的是error的最小值，因為上面宣告是6，所以會分別根據這六者分別進行求最小化
     const std::array<T, 6> error = ScaleError(
         ComputeUnscaledError(
             landmark_to_tracking_transform_,

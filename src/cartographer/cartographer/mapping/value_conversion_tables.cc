@@ -83,6 +83,10 @@ std::unique_ptr<std::vector<float>> PrecomputeValueToBoundedFloat(
  * @param[in] lower_bound 0.1 最小correspondence_cost
  * @param[in] upper_bound 0.9 最大correspondence_cost
  * @return const std::vector<float>* 
+ * tsdf   0.3就是未知的值
+ * lower_bound -0.3
+ * upper_bound 0.3
+ * 
  */
 const std::vector<float>* ValueConversionTables::GetConversionTable(
     float unknown_result, float lower_bound, float upper_bound) {

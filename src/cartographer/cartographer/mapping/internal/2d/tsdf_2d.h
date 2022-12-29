@@ -35,15 +35,19 @@ class TSDF2D : public Grid2D {
          ValueConversionTables* conversion_tables);
   explicit TSDF2D(const proto::Grid2D& proto,
                   ValueConversionTables* conversion_tables);
-
+  //在概率中稱SetProbability()
   void SetCell(const Eigen::Array2i& cell_index, const float tsd,
                const float weight);
   GridType GetGridType() const override;
   float GetTSD(const Eigen::Array2i& cell_index) const;
   float GetWeight(const Eigen::Array2i& cell_index) const;
+  //在概率中稱GetProbability()
   std::pair<float, float> GetTSDAndWeight(
       const Eigen::Array2i& cell_index) const;
-
+  
+  //這個函式在父類的protected，並且是有函式的，這邊要寫override
+  //才會執行這個，不然會執行父類的GrowLimits()
+  //因為子類可以不自己實現此函式，在概率地圖中就沒有寫
   void GrowLimits(const Eigen::Vector2f& point) override;
   proto::Grid2D ToProto() const override;
   std::unique_ptr<Grid2D> ComputeCroppedGrid() const override;

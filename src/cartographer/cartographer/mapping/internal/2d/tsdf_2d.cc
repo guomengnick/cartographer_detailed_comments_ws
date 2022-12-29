@@ -23,9 +23,9 @@ namespace mapping {
 
 /**
  * @brief 构造函数
- * 
  * @param[in] limits 地图坐标信息
- * @param[in] truncation_distance 0.3
+ * @param[in] truncation_distance 傳入-0.3  0.3     概率地圖：傳入0.1   0.9
+ *                                最後都轉成 1～32767的查找表
  * @param[in] max_weight 10.0
  * @param[in] conversion_tables 转换表
  */

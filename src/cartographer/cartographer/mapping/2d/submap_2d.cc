@@ -225,7 +225,7 @@ ActiveSubmaps2D::CreateRangeDataInserter() {
       LOG(FATAL) << "Unknown RangeDataInserterType.";
   }
 }
-
+//kuo: origin是當前定位到的原點作為起點創建新的柵格地圖
 // 以当前雷达原点为地图原件创建地图
 std::unique_ptr<GridInterface> ActiveSubmaps2D::CreateGrid(
     const Eigen::Vector2f& origin) {

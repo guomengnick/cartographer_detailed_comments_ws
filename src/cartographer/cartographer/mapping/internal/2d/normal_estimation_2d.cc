@@ -71,6 +71,8 @@ proto::NormalEstimationOptions2D CreateNormalEstimationOptions2D(
   CHECK_GT(options.sample_radius(), 0.0);
   return options;
 }
+//譯：預測每個障礙物點的normal，假設雷達點的角度已經排好序（已排好序），
+//且是在origin座標系（此幀點雲匹配後在local座標系下的tracking位置）下到每一個障礙物點
 
 // Estimates the normal for each 'return' in 'range_data'.
 // Assumes the angles in the range data returns are sorted with respect to

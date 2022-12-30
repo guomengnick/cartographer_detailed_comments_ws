@@ -29,6 +29,10 @@ constexpr int kSubpixelScale = 1000;
 // observations are discarded.
 constexpr float kMinRangeMeters = 1e-6f;
 const float kSqrtTwoPi = std::sqrt(2.0 * M_PI);
+/*
+* range_data.origin：local-> 此幀tracking匹配後的位置(XYZ)
+* 
+*/
 
 void GrowAsNeeded(const sensor::RangeData& range_data,
                   const float truncation_distance, TSDF2D* const tsdf) {
@@ -128,6 +132,7 @@ TSDFRangeDataInserter2D::TSDFRangeDataInserter2D(
 // If 'options.update_free_space' is 'true', all cells along the ray
 // until 'truncation_distance' behind hit are updated. Otherwise, only the cells
 // within 'truncation_distance' around hit are updated.
+
 void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
                                      GridInterface* grid) const {
   const float truncation_distance =
@@ -147,6 +152,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
     std::sort(returns.begin(), returns.end(),
               RangeDataSorter(sorted_range_data.origin));
     sorted_range_data.returns = sensor::PointCloud(std::move(returns));
+    //kuo 預設參數會計算normal，（還沒細看，normals應該是要將每一個點的垂直方向寫入地圖中）
     normals = EstimateNormals(sorted_range_data,
                               options_.normal_estimation_options());
   }
@@ -165,6 +171,9 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
 }
 
 // 对TSDF地图进行更新hit
+//要寫入地圖的點： hit 、normal
+//kuo hit: 遍歷的每一個障礙物點，方向是local 座標系下的tracking
+// normal: 遍歷的每一個障礙物點的垂直方向
 void TSDFRangeDataInserter2D::InsertHit(
     const proto::TSDFRangeDataInserterOptions2D& options,
     const Eigen::Vector2f& hit, const Eigen::Vector2f& origin, float normal,

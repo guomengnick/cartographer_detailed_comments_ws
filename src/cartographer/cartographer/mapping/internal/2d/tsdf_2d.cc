@@ -67,7 +67,7 @@ void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
   const int flat_index = ToFlatIndex(cell_index);
   uint16* tsdf_cell = &(*mutable_correspondence_cost_cells())[flat_index];
   if (*tsdf_cell >= value_converter_->getUpdateMarker()) {
-    return;
+    return;//一幀的一個柵格值更新完就不再重複更新
   }
   mutable_update_indices()->push_back(flat_index);
   mutable_known_cells_box()->extend(cell_index.matrix());

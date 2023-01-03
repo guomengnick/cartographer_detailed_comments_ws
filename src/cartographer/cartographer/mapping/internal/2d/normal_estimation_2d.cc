@@ -27,6 +27,13 @@ float NormalTo2DAngle(const Eigen::Vector3f& v) {
 // Estimate the normal of an estimation_point as the arithmetic mean of the the
 // normals of the vectors from estimation_point to each point in the
 // sample_window.
+/*
+returns：此幀障礙物點
+estimation_point_index：要預測的障礙物點
+sample_window_begin：要計算障礙物點的normal 起始點
+sample_window_end：結束點
+sensor_origin：此幀tracking 在local 座標系下的位置
+*/
 float EstimateNormal(const sensor::PointCloud& returns,
                      const size_t estimation_point_index,
                      const size_t sample_window_begin,
@@ -34,6 +41,8 @@ float EstimateNormal(const sensor::PointCloud& returns,
                      const Eigen::Vector3f& sensor_origin) {
   const Eigen::Vector3f& estimation_point =
       returns[estimation_point_index].position;
+  
+  //當hit 鄰近點的起始、結束點只間隔1或0時，（造成原因可能太遠障礙物離雷達太遠等等）
   if (sample_window_end - sample_window_begin < 2) {
     return NormalTo2DAngle(sensor_origin - estimation_point);
   }
@@ -77,6 +86,10 @@ proto::NormalEstimationOptions2D CreateNormalEstimationOptions2D(
 // Estimates the normal for each 'return' in 'range_data'.
 // Assumes the angles in the range data returns are sorted with respect to
 // the orientation of the vector from 'origin' to 'return'.
+//一幀點雲數據：體素濾波的點 voxel_filter_size
+//     origin ：tracking 匹配後位於local座標系下的位置
+//     returns：從tracking 到障礙物的點
+//     misses ：沒用到 
 std::vector<float> EstimateNormals(
     const sensor::RangeData& range_data,
     const proto::NormalEstimationOptions2D& normal_estimation_options) {
@@ -84,10 +97,13 @@ std::vector<float> EstimateNormals(
   normals.reserve(range_data.returns.size());
   const size_t max_num_samples = normal_estimation_options.num_normal_samples();
   const float sample_radius = normal_estimation_options.sample_radius();
-  for (size_t current_point = 0; current_point < range_data.returns.size();
-       ++current_point) {
+  
+  //遍歷此幀障礙物點
+  for (size_t current_point = 0; current_point < range_data.returns.size(); ++current_point) {
     const Eigen::Vector3f& hit = range_data.returns[current_point].position;
     size_t sample_window_begin = current_point;
+    //設定sample_window_begin
+    //sample_window_begin：初始為0，如果current_point為0，則sample_window_begin也為0
     for (; sample_window_begin > 0 &&
            current_point - sample_window_begin < max_num_samples / 2 &&
            (hit - range_data.returns[sample_window_begin - 1].position).norm() <
@@ -95,10 +111,13 @@ std::vector<float> EstimateNormals(
          --sample_window_begin) {
     }
     size_t sample_window_end = current_point;
+    //設定sample_window_end
+    //current_point:0，sample_window_begin:0，sample_window_end就為2
+    //且遍歷點~最後點不得大於採樣半徑0.5
     for (;
          sample_window_end < range_data.returns.size() &&
-         sample_window_end - current_point < ceil(max_num_samples / 2.0) + 1 &&
-         (hit - range_data.returns[sample_window_end].position).norm() <
+         sample_window_end - current_point < ceil(max_num_samples / 2.0) + 1 &&//2-0 < 3
+         (hit - range_data.returns[sample_window_end].position).norm() <  
              sample_radius;
          ++sample_window_end) {
     }

@@ -239,12 +239,13 @@ void TSDFRangeDataInserter2D::UpdateCell(const Eigen::Array2i& cell,
                                          float update_sdf, float update_weight,
                                          TSDF2D* tsdf) const {
   if (update_weight == 0.f) return;
-  // 获取TSD值与权重值
+  // 获取TSD值与权重值，  first是tsd初始-0.3 ，second是權重初始0，
   const std::pair<float, float> tsd_and_weight = tsdf->GetTSDAndWeight(cell);
   float updated_weight = tsd_and_weight.second + update_weight;
   float updated_sdf = (tsd_and_weight.first * tsd_and_weight.second +
                        update_sdf * update_weight) /
                       updated_weight;
+  //如果大於10就用10代替
   updated_weight =
       std::min(updated_weight, static_cast<float>(options_.maximum_weight()));
   tsdf->SetCell(cell, updated_sdf, updated_weight);

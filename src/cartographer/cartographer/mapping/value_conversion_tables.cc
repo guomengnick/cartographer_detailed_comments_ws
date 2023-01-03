@@ -78,15 +78,10 @@ std::unique_ptr<std::vector<float>> PrecomputeValueToBoundedFloat(
 
 /**
  * @brief 获取转换表, 这个函数只会调用1次
- * 
- * @param[in] unknown_result 0.9 未知时的值
- * @param[in] lower_bound 0.1 最小correspondence_cost
- * @param[in] upper_bound 0.9 最大correspondence_cost
+ * @param[in] unknown_result 0.9 未知时的值               tsdf   0.3就是未知的值
+ * @param[in] lower_bound 0.1 最小correspondence_cost          -0.3
+ * @param[in] upper_bound 0.9 最大correspondence_cost           0.3
  * @return const std::vector<float>* 
- * tsdf   0.3就是未知的值
- * lower_bound -0.3
- * upper_bound 0.3
- * 
  */
 const std::vector<float>* ValueConversionTables::GetConversionTable(
     float unknown_result, float lower_bound, float upper_bound) {

@@ -71,10 +71,15 @@ void TSDF2D::SetCell(const Eigen::Array2i& cell_index, float tsd,
   }
   mutable_update_indices()->push_back(flat_index);
   mutable_known_cells_box()->extend(cell_index.matrix());
+  //前項：tsd 值 0.1->16384       後項：32767（定值）
+  //tsdf_cell：49151  一幀內的柵格，一旦超過32767就不再更新此值
   *tsdf_cell =
       value_converter_->TSDToValue(tsd) + value_converter_->getUpdateMarker();
   uint16* weight_cell = &weight_cells_[flat_index];
   *weight_cell = value_converter_->WeightToValue(weight);
+
+
+
 }
 
 GridType TSDF2D::GetGridType() const { return GridType::TSDF; }

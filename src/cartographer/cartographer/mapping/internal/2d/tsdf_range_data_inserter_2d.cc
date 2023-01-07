@@ -142,9 +142,10 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
 
   // Compute normals if needed.
   bool scale_update_weight_angle_scan_normal_to_ray =
-      options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth() != 0.f;
+      options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth() != 0.f;//0.5
   sensor::RangeData sorted_range_data = range_data;
   std::vector<float> normals;
+  //預設是 true , 0.5 ，都會進入
   if (options_.project_sdf_distance_to_scan_normal() ||
       scale_update_weight_angle_scan_normal_to_ray) {
     std::vector<sensor::RangefinderPoint> returns =
@@ -152,7 +153,7 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
     std::sort(returns.begin(), returns.end(),
               RangeDataSorter(sorted_range_data.origin));
     sorted_range_data.returns = sensor::PointCloud(std::move(returns));
-    //kuo 預設參數會計算normal，（還沒細看，normals應該是要將每一個點的垂直方向寫入地圖中）
+    //預設參數會計算normal
     normals = EstimateNormals(sorted_range_data,
                               options_.normal_estimation_options());
   }
@@ -194,29 +195,34 @@ void TSDFRangeDataInserter2D::InsertHit(
       superscaled_ray.first, superscaled_ray.second, kSubpixelScale);
 
   // Precompute weight factors.
+  //會將weight_factor_angle_ray_normal更新，但最後更新權重還是會用tsd 進入高斯核的值
   float weight_factor_angle_ray_normal = 1.f;
-  if (options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth() !=
+  if (options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth() !=//0.5
       0.f) {
+    //negative_ray：需要乘負號，反向才會跟normal同方向
     const Eigen::Vector2f negative_ray = -ray;
     float angle_ray_normal =
         common::NormalizeAngleDifference(normal - common::atan2(negative_ray));
+    //預設會用高斯核更新 weight
     weight_factor_angle_ray_normal = GaussianKernel(
         angle_ray_normal,
-        options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth());
+        options_.update_weight_angle_scan_normal_to_ray_kernel_bandwidth());//0.5
   }
   float weight_factor_range = 1.f;
-  if (options_.update_weight_range_exponent() != 0) {
+  if (options_.update_weight_range_exponent() != 0) {//0.
+    //預設不會用距離更新weight
     weight_factor_range = ComputeRangeWeightFactor(
         range, options_.update_weight_range_exponent());
   }
 
-  // Update Cells.
+  // Update Cells.此hit 前後截斷距離的數個柵格
   for (const Eigen::Array2i& cell_index : ray_mask) {
     if (tsdf->CellIsUpdated(cell_index)) continue;
     Eigen::Vector2f cell_center = tsdf->limits().GetCellCenter(cell_index);
     float distance_cell_to_origin = (cell_center - origin).norm();
     float update_tsd = range - distance_cell_to_origin;
-    if (options_.project_sdf_distance_to_scan_normal()) {
+    if (options_.project_sdf_distance_to_scan_normal()) {//true
+      //預設會更新初始值，將觀測時有多垂直於雷達加入考量
       float normal_orientation = normal;
       update_tsd = (cell_center - hit)
                        .dot(Eigen::Vector2f{std::cos(normal_orientation),
@@ -225,7 +231,9 @@ void TSDFRangeDataInserter2D::InsertHit(
     update_tsd =
         common::Clamp(update_tsd, -truncation_distance, truncation_distance);
     float update_weight = weight_factor_range * weight_factor_angle_ray_normal;
-    if (options_.update_weight_distance_cell_to_hit_kernel_bandwidth() != 0.f) {
+    if (options_.update_weight_distance_cell_to_hit_kernel_bandwidth() != 0.f) {  //0.5
+      //預設會用高斯核更新update_weight
+      //距離中心點越遠，則權重遞減
       update_weight *= GaussianKernel(
           update_tsd,
           options_.update_weight_distance_cell_to_hit_kernel_bandwidth());
